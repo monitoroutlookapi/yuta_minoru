@@ -2,7 +2,7 @@ name: Microsoft Login Send Code
 on:
   workflow_dispatch:
   schedule:
-    - cron: '*/10 * * * *'
+    - cron: '*/30 * * * *'
 jobs:
   login:
     runs-on: ubuntu-latest
@@ -14,10 +14,17 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Setup Microsoft Edge
-        uses: browser-actions/setup-edge@v1
+      - name: Install Microsoft Edge
+        run: |
+          curl https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.gpg
+          sudo install -o root -g root -m 644 microsoft.gpg /etc/apt/trusted.gpg.d/
+          sudo sh -c 'echo "deb [arch=amd64] https://packages.microsoft.com/repos/edge stable main" > /etc/apt/sources.list.d/microsoft-edge.list'
+          sudo apt-get update
+          sudo apt-get install -y microsoft-edge-stable
       - name: Install dependencies
         run: npm install
+      - name: Install Playwright browsers
+        run: npx playwright install msedge
       - name: Run login script
         env:
           MS_EMAIL: ${{ secrets.MS_EMAIL }}
